@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Video Conference</title>
+    <script type="module">
+        // Import Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyANvzYTTzmi1oWBj2nNdhdvEik4uxGqw4M",
+            authDomain: "pairup-66d2c.firebaseapp.com",
+            projectId: "pairup-66d2c",
+            storageBucket: "pairup-66d2c.firebasestorage.app",
+            messagingSenderId: "91688990339",
+            appId: "1:91688990339:web:8e8ab9584b40d337f2cdb6",
+            measurementId: "G-0QXD93FNT8"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+
+        // Sign in anonymously
+        signInAnonymously(auth)
+            .then(() => console.log("Signed in anonymously"))
+            .catch(error => console.error("Firebase Auth Error:", error));
+    </script>
+
+    <script src="https://cdn.webrtc-experiment.com/RTCMultiConnection.min.js"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        video { width: 300px; height: 200px; border: 2px solid black; }
+        #videos { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Live Video Conference</h1>
+    <div id="videos"></div>
+    
+    <script>
+        function requestPermissions() {
+            return new Promise((resolve, reject) => {
+                navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                    .then(stream => {
+                        resolve(stream);
+                    })
+                    .catch(error => {
+                        reject(error);
+                    });
+            });
+        }
+
+        requestPermissions()
+            .then(stream => {
+                const connection = new RTCMultiConnection();
+                connection.socketURL = 'https://rtcmulticonnection.herokuapp.com/';
+
+                connection.session = { audio: true, video: true };
+                connection.mediaConstraints = { video: true, audio: true };
+                connection.sdpConstraints.mandatory = { OfferToReceiveAudio: true, OfferToReceiveVideo: true };
+
+                connection.onstream = function(event) {
+                    const video = document.createElement('video');
+                    video.srcObject = event.stream;
+                    video.autoplay = true;
+                    video.controls = true;
+                    document.getElementById('videos').appendChild(video);
+                };
+
+                connection.openOrJoin('globalRoom');
+            })
+            .catch(error => {
+                alert('Permissions denied: ' + error.message);
+            });
+    </script>
+</body>
+</html>
